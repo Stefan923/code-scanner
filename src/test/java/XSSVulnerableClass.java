@@ -27,6 +27,9 @@ public class XSSVulnerableClass {
         writeTransformedData(transformedData);
 
         scanner.close();
+        synchronized (this) {
+
+        }
     }
 
     private void writeToFile(String userInput) {
