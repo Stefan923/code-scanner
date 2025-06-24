@@ -8,7 +8,7 @@ public class XSSVulnerableClass {
     public void getAndProcessUserInput() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter input: ");
-        String userInput = scanner.nextLine();
+        String userInput = escapeHtml1(scanner.nextLine());
 
         if (userInput == null || userInput.trim().isEmpty()) {
             userInput = "default value";
@@ -27,9 +27,6 @@ public class XSSVulnerableClass {
         writeTransformedData(transformedData);
 
         scanner.close();
-        synchronized (this) {
-
-        }
     }
 
     private void writeToFile(String userInput) {

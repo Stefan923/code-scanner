@@ -7,7 +7,7 @@ import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
-import java.util.Map;
+ import java.util.Map;
 
 /**
  * Visitor that tracks "taint" for variables within a method.
@@ -21,8 +21,9 @@ public class TaintTrackingVisitor extends VoidVisitorAdapter<Map<String, Boolean
         super.visit(var, taintMap);
         if (var.getInitializer().isPresent()) {
             Expression init = var.getInitializer().get();
-            if (isTainted(init, taintMap)) {
-                taintMap.put(var.getNameAsString(), true);
+            Boolean taintStatus = checkExpressionTaintStatus(init, taintMap);
+            if (taintStatus != null) {
+                taintMap.put(var.getNameAsString(), taintStatus);
             }
         }
     }
@@ -32,10 +33,27 @@ public class TaintTrackingVisitor extends VoidVisitorAdapter<Map<String, Boolean
         super.visit(assign, taintMap);
         if (assign.getTarget().isNameExpr()) {
             String varName = assign.getTarget().asNameExpr().getNameAsString();
-            if (isTainted(assign.getValue(), taintMap)) {
-                taintMap.put(varName, true);
+            Boolean taintStatus = checkExpressionTaintStatus(assign.getValue(), taintMap);
+            if (taintStatus != null) {
+                taintMap.put(varName, taintStatus);
             }
         }
+    }
+
+    private Boolean checkExpressionTaintStatus(Expression expr, Map<String, Boolean> taintMap) {
+        if (isEscaped(expr)) {
+            return false; // Explicitly escaped
+        }
+
+        if (isTainted(expr, taintMap)) {
+            return true; // Tainted source
+        }
+
+        if (expr.isNameExpr()) {
+            return taintMap.get(expr.asNameExpr().getNameAsString());
+        }
+
+        return null; // Unknown status
     }
 
     private boolean isTainted(Expression expr, Map<String, Boolean> taintMap) {
@@ -56,6 +74,25 @@ public class TaintTrackingVisitor extends VoidVisitorAdapter<Map<String, Boolean
         for (Node child : expr.getChildNodes()) {
             if (child instanceof Expression && isTainted((Expression) child, taintMap))
                 return true;
+        }
+        return false;
+    }
+
+    private boolean isEscaped(Expression expr) {
+        if (expr.isMethodCallExpr()) {
+            String methodName = expr.asMethodCallExpr().getNameAsString();
+            return methodName.equals("escapeHtml") ||
+                    methodName.equals("encodeForHTML") ||
+                    methodName.equals("sanitize");
+        }
+        return false;
+    }
+
+    private boolean isEscapedValue(Expression expr, Map<String, Boolean> taintMap) {
+        if (expr.isNameExpr()) {
+            String varName = expr.asNameExpr().getNameAsString();
+            Boolean status = taintMap.get(varName);
+            return status != null && !status; // Marked as escaped
         }
         return false;
     }

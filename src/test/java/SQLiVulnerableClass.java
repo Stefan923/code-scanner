@@ -19,7 +19,7 @@ public class SQLiVulnerableClass {
 
         String query = buildQuery(transformedInput);
 
-        executeQuery(query);
+        executeQuery(escapeHtml(query));
     }
 
     private String transformInput(String input) {
