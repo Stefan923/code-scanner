@@ -1,7 +1,12 @@
 package me.stefan923.codescanner;
 
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import me.stefan923.codescanner.visitor.VulnerabilityVisitor;
 
 import java.io.File;
@@ -19,6 +24,16 @@ public class Main {
         String sourceFile = "src/test/java/";
 
         File sourceDir = new File(sourceFile);
+
+        CombinedTypeSolver typeSolver = new CombinedTypeSolver();
+        typeSolver.add(new ReflectionTypeSolver());
+        typeSolver.add(new JavaParserTypeSolver(sourceDir));
+
+        JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
+        ParserConfiguration parserConfig = new ParserConfiguration()
+                .setSymbolResolver(symbolSolver);
+        StaticJavaParser.setConfiguration(parserConfig);
+
         List<File> javaFiles = new ArrayList<>();
         collectJavaFiles(sourceDir, javaFiles);
 

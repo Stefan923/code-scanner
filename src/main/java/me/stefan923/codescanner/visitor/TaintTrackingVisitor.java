@@ -42,18 +42,18 @@ public class TaintTrackingVisitor extends VoidVisitorAdapter<Map<String, Boolean
 
     private Boolean checkExpressionTaintStatus(Expression expr, Map<String, Boolean> taintMap) {
         if (isEscaped(expr)) {
-            return false; // Explicitly escaped
+            return false;
         }
 
         if (isTainted(expr, taintMap)) {
-            return true; // Tainted source
+            return true;
         }
 
         if (expr.isNameExpr()) {
             return taintMap.get(expr.asNameExpr().getNameAsString());
         }
 
-        return null; // Unknown status
+        return null;
     }
 
     private boolean isTainted(Expression expr, Map<String, Boolean> taintMap) {
@@ -84,15 +84,6 @@ public class TaintTrackingVisitor extends VoidVisitorAdapter<Map<String, Boolean
             return methodName.equals("escapeHtml") ||
                     methodName.equals("encodeForHTML") ||
                     methodName.equals("sanitize");
-        }
-        return false;
-    }
-
-    private boolean isEscapedValue(Expression expr, Map<String, Boolean> taintMap) {
-        if (expr.isNameExpr()) {
-            String varName = expr.asNameExpr().getNameAsString();
-            Boolean status = taintMap.get(varName);
-            return status != null && !status; // Marked as escaped
         }
         return false;
     }

@@ -8,12 +8,13 @@ public class XSSVulnerableClass {
     public void getAndProcessUserInput() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter input: ");
-        String userInput = escapeHtml1(scanner.nextLine());
+        String userInput = scanner.nextLine();
 
         if (userInput == null || userInput.trim().isEmpty()) {
             userInput = "default value";
         }
 
+        XSSExtended.writeToFile(userInput);
         writeToFile(userInput);
 
         String sanitizedInput = sanitizeInput(userInput);
@@ -29,9 +30,9 @@ public class XSSVulnerableClass {
         scanner.close();
     }
 
-    private void writeToFile(String userInput) {
+    private void writeToFile(String youAreDumb) {
         try (FileWriter writer = new FileWriter("vulnerableOutput.html", true)) {
-            writer.write("<div>" + userInput + "</div>\n");
+            writer.write("<div>" + youAreDumb + "</div>\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -78,5 +79,9 @@ public class XSSVulnerableClass {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private String escapeHtml(String string) {
+        return string.replaceAll("&", "&amp;");
     }
 }

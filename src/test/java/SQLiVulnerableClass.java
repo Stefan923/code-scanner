@@ -50,4 +50,8 @@ public class SQLiVulnerableClass {
     private void logQuery(String query) {
         System.out.println("Log: " + query);
     }
+
+    private String escapeHtml(String string) {
+        return string.replaceAll("&", "&amp;");
+    }
 }
