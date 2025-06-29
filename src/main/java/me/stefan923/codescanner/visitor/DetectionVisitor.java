@@ -57,12 +57,6 @@ public class DetectionVisitor extends VoidVisitorAdapter<Void> {
     }
 
     @Override
-    public void visit(MethodDeclaration md, Void arg) {
-        super.visit(md, arg);
-        vulnerabilities.addAll(compositeDetector.detect(md, taintMap));
-    }
-
-    @Override
     public void visit(BinaryExpr binExpr, Void arg) {
         super.visit(binExpr, arg);
         vulnerabilities.addAll(compositeDetector.detect(binExpr, taintMap));

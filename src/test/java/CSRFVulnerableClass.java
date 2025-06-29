@@ -1,8 +1,10 @@
+import exception.InvalidCSRFTokenException;
+
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URL;
 
 public class CSRFVulnerableClass extends HttpServlet {
     @Override
@@ -13,12 +15,22 @@ public class CSRFVulnerableClass extends HttpServlet {
         } else {
             response.getWriter().println("No action performed.");
         }
-        URL url = new URL(action);
-        Runtime.getRuntime().exec(request.getParameter("command"));
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        validateCsrfToken(request, response);
         doPost(request, response);
+    }
+
+    private void validateCsrfToken(HttpServletRequest request, HttpServletResponse ignoredResponse) {
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (cookie.getName().equals("csrfToken")) {
+                    return;
+                }
+            }
+        }
+        throw new InvalidCSRFTokenException("CSRF token is not valid");
     }
 }
