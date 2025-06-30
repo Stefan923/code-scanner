@@ -21,9 +21,20 @@ import java.util.Objects;
 public class Main {
 
     public static void main(String[] args) {
-        String sourceFile = "src/test/java/";
+        String sourceFile = args.length > 0 ? args[0] : "../BenchmarkJava";
+        String action = args.length > 1 ? args[1].toLowerCase() : "benchmark";
+
+        if (!action.equals("benchmark") && !action.equals("suggest-fixes")) {
+            System.err.println("Invalid action: " + action);
+            System.err.println("Valid actions: benchmark | suggest-fixes");
+            return;
+        }
 
         File sourceDir = new File(sourceFile);
+        if (!sourceDir.exists() || !sourceDir.isDirectory()) {
+            System.err.println("Invalid source path: " + sourceFile);
+            return;
+        }
 
         CombinedTypeSolver typeSolver = new CombinedTypeSolver();
         typeSolver.add(new ReflectionTypeSolver());
