@@ -47,8 +47,7 @@ public class IntegerOverflowDetector implements VulnerabilityDetector {
                             break;
                     }
                     // Check if the result exceeds 32-bit signed integer range.
-                    if (result.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0 ||
-                            result.compareTo(BigInteger.valueOf(Integer.MIN_VALUE)) < 0) {
+                    if (result.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
                         String className = getEnclosingClassName(bin);
                         int line = bin.getBegin().map(pos -> pos.line).orElse(-1);
                         integerOverflowVulnerabilities.add(new Vulnerability("Integer Overflow",
