@@ -1,84 +1,47 @@
 package me.stefan923.codescanner;
 
-import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
-import me.stefan923.codescanner.visitor.VulnerabilityVisitor;
+import me.stefan923.codescanner.output.ConsoleOutputStrategy;
+import me.stefan923.codescanner.output.JsonOutputStrategy;
+import me.stefan923.codescanner.output.OutputStrategy;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-/**
- * Analyzer class that parses Java source code using JavaParser and checks for vulnerabilities:
- * SQL Injection, XSS, CSRF, and Buffer Overflow.
- */
 public class Main {
 
     public static void main(String[] args) {
-        String sourceFile = args.length > 0 ? args[0] : "../BenchmarkJava";
+        String sourcePath = args.length > 0 ? args[0] : "../BenchmarkJava";
         String action = args.length > 1 ? args[1].toLowerCase() : "benchmark";
+        String outputType = args.length > 2 ? args[2].toLowerCase() : "console";
 
-        if (!action.equals("benchmark") && !action.equals("suggest-fixes")) {
+        if (!List.of("benchmark", "suggest-fixes").contains(action)) {
             System.err.println("Invalid action: " + action);
-            System.err.println("Valid actions: benchmark | suggest-fixes");
             return;
         }
 
-        File sourceDir = new File(sourceFile);
+        File sourceDir = new File(sourcePath);
         if (!sourceDir.exists() || !sourceDir.isDirectory()) {
-            System.err.println("Invalid source path: " + sourceFile);
+            System.err.println("Invalid source path: " + sourcePath);
             return;
         }
 
-        CombinedTypeSolver typeSolver = new CombinedTypeSolver();
-        typeSolver.add(new ReflectionTypeSolver());
-        typeSolver.add(new JavaParserTypeSolver(sourceDir));
+        JavaFileScanner scanner = new JavaFileScanner(sourceDir);
+        List<Vulnerability> vulnerabilities = scanner.scan();
 
-        JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
-        ParserConfiguration parserConfig = new ParserConfiguration()
-                .setSymbolResolver(symbolSolver);
-        StaticJavaParser.setConfiguration(parserConfig);
-
-        List<File> javaFiles = new ArrayList<>();
-        collectJavaFiles(sourceDir, javaFiles);
-
-        List<Vulnerability> vulnerabilities = new ArrayList<>();
-
-        // Process each Java file
-        for (File file : javaFiles) {
-            try {
-                CompilationUnit cu = StaticJavaParser.parse(file);
-                VulnerabilityVisitor visitor = new VulnerabilityVisitor(vulnerabilities);
-                visitor.visit(cu, null);
-            } catch (Exception e) {
-                System.err.println("Error parsing file: " + file.getAbsolutePath());
-                e.printStackTrace();
-            }
+        OutputStrategy output = createOutputStrategy(outputType);
+        if (output == null) {
+            System.err.println("Invalid output type: " + outputType);
+            return;
         }
 
-        if (vulnerabilities.isEmpty()) {
-            System.out.println("No vulnerabilities detected.");
-        } else {
-            System.out.println("Detected vulnerabilities:");
-            for (Vulnerability v : vulnerabilities) {
-                System.out.println(v);
-            }
-        }
+        output.print(vulnerabilities);
     }
 
-    private static void collectJavaFiles(File dir, List<File> javaFiles) {
-        if (dir.isFile() && dir.getName().endsWith(".java")) {
-            javaFiles.add(dir);
-        } else if (dir.isDirectory()) {
-            for (File file : Objects.requireNonNull(dir.listFiles())) {
-                collectJavaFiles(file, javaFiles);
-            }
-        }
+    private static OutputStrategy createOutputStrategy(String type) {
+        return switch (type) {
+            case "console" -> new ConsoleOutputStrategy();
+            case "json" -> new JsonOutputStrategy();
+            default -> null;
+        };
     }
 }
