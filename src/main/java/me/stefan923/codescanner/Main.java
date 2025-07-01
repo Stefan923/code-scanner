@@ -1,5 +1,6 @@
 package me.stefan923.codescanner;
 
+import me.stefan923.codescanner.metrics.ScanMetrics;
 import me.stefan923.codescanner.output.ConsoleOutputStrategy;
 import me.stefan923.codescanner.output.JsonOutputStrategy;
 import me.stefan923.codescanner.output.OutputStrategy;
@@ -25,8 +26,13 @@ public class Main {
             return;
         }
 
-        JavaFileScanner scanner = new JavaFileScanner(sourceDir);
+        ScanMetrics metrics = new ScanMetrics();
+        metrics.start();
+
+        JavaFileScanner scanner = new JavaFileScanner(sourceDir, metrics);
         List<Vulnerability> vulnerabilities = scanner.scan();
+
+        metrics.end();
 
         OutputStrategy output = createOutputStrategy(outputType);
         if (output == null) {
@@ -34,6 +40,7 @@ public class Main {
             return;
         }
 
+        metrics.printSummary();
         output.print(vulnerabilities);
     }
 
